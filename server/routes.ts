@@ -222,6 +222,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Build from prompt route
+  app.post("/api/ai/build-from-prompt", isAuthenticated, async (req: any, res) => {
+    try {
+      const { prompt } = req.body;
+      
+      if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+        return res.status(400).json({ 
+          message: "A valid prompt is required" 
+        });
+      }
+
+      const { buildFromPrompt } = await import("./gemini");
+      const generatedWebsite = await buildFromPrompt(prompt);
+      
+      // Create a new project with the generated content
+      const userId = req.user.claims.sub;
+      const projectData = insertProjectSchema.parse({
+        title: generatedWebsite.title,
+        description: generatedWebsite.description,
+        userId,
+        components: generatedWebsite.components,
+        htmlCode: generatedWebsite.htmlCode,
+        cssCode: generatedWebsite.cssCode,
+        jsCode: generatedWebsite.jsCode,
+      });
+      
+      const project = await storage.createProject(projectData);
+      
+      res.json({ 
+        project,
+        generated: generatedWebsite 
+      });
+    } catch (error) {
+      console.error("Error building from prompt:", error);
+      res.status(500).json({ 
+        message: "Failed to build from prompt. Please check your API key and try again." 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

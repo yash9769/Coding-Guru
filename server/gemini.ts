@@ -125,6 +125,63 @@ Generate the middleware file.`;
   }
 }
 
+export async function buildFromPrompt(userPrompt: string): Promise<{
+  title: string;
+  description: string;
+  components: any[];
+  htmlCode: string;
+  cssCode: string;
+  jsCode: string;
+}> {
+  const prompt = `You are an expert web developer. Based on this user request, generate a complete website structure:
+
+"${userPrompt}"
+
+Please provide a JSON response with:
+1. A suitable title for the website
+2. A brief description
+3. An array of components that should be included (with their types and content)
+4. Complete HTML code for the website
+5. Complete CSS code (using Tailwind classes where possible)
+6. Any necessary JavaScript code
+
+Make the design modern, responsive, and professional. Include proper structure with header, main content, and footer where appropriate.
+
+Return ONLY valid JSON in this exact format:
+{
+  "title": "Website Title",
+  "description": "Brief description",
+  "components": [{"type": "header", "content": "..."}, {"type": "hero", "content": "..."}, ...],
+  "htmlCode": "<!DOCTYPE html>...",
+  "cssCode": "/* CSS styles */",
+  "jsCode": "// JavaScript code"
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      config: {
+        responseMimeType: "application/json",
+      },
+      contents: prompt,
+    });
+
+    const result = JSON.parse(response.text || '{}');
+    
+    return {
+      title: result.title || "Generated Website",
+      description: result.description || "Generated using AI",
+      components: result.components || [],
+      htmlCode: result.htmlCode || "<!DOCTYPE html><html><head><title>Generated Site</title></head><body><h1>Generated Content</h1></body></html>",
+      cssCode: result.cssCode || "/* Generated styles */",
+      jsCode: result.jsCode || "// Generated JavaScript",
+    };
+  } catch (error) {
+    console.error("Error building from prompt:", error);
+    throw new Error("Failed to generate website from prompt");
+  }
+}
+
 export async function optimizeCode(code: string, type: 'component' | 'backend'): Promise<string> {
   const prompt = `Analyze and optimize the following ${type} code:
 

@@ -16,8 +16,8 @@ export default function Landing() {
             <div className="w-20 h-20 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-xl">
               <WandSparkles className="w-10 h-10 text-primary" />
             </div>
-            <h1 className="text-6xl font-bold text-white mb-4">AI Builder</h1>
-            <p className="text-xl text-white/90 mb-12">Design. Generate. Deploy.</p>
+            <h1 className="text-6xl font-bold text-white mb-4">Coding Guru</h1>
+            <p className="text-xl text-white/90 mb-12">Craft apps, skips the code.</p>
           </div>
           
           <Button 
@@ -38,7 +38,7 @@ export default function Landing() {
             {/* Left Side - Features */}
             <div>
               <h2 className="text-4xl font-bold text-foreground mb-6">
-                Welcome to AI Builder
+                Welcome to Coding Guru
               </h2>
               <p className="text-xl text-muted-foreground mb-8">
                 Create stunning websites with the power of AI

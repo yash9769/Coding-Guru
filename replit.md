@@ -1,8 +1,8 @@
-# Replit.md - AI Builder Platform
+# Replit.md - Coding Guru Platform
 
 ## Overview
 
-AI Builder is a comprehensive full-stack web application that enables users to create, design, and deploy websites using AI-powered tools. The platform features a visual drag-and-drop interface, code generation capabilities, backend API builder, and integrated deployment options. Built with a modern React frontend and Express.js backend, it provides an end-to-end solution for web development with minimal coding required.
+Coding Guru is a comprehensive full-stack web application that enables users to create, design, and deploy websites using AI-powered tools. The platform features a visual drag-and-drop interface, code generation capabilities, backend API builder, and integrated deployment options. Built with a modern React frontend and Express.js backend, it provides an end-to-end solution for web development with minimal coding required.
 
 ## User Preferences
 

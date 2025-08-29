@@ -277,7 +277,7 @@ export default function Dashboard() {
           </div>
 
           {/* Canvas */}
-          <div className="flex-1 bg-muted/20">
+          <div className="flex-1 bg-muted/20 relative">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -290,6 +290,44 @@ export default function Dashboard() {
               <MiniMap />
               <Background variant={"dots" as any} gap={20} size={1} />
             </ReactFlow>
+
+            {/* Build from Prompt Section (only in canvas area) */}
+            {nodes.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-muted/20">
+                <div className="text-center max-w-2xl pointer-events-auto">
+                  <Star className="w-12 h-12 text-accent mx-auto mb-4" />
+                  <h3 className="text-2xl font-medium text-foreground mb-2">
+                    Build Anything with AI
+                  </h3>
+                  <p className="text-muted-foreground mb-8">
+                    Describe what you want to build and let AI create it for you
+                  </p>
+                  
+                  <BuildFromPromptForm onSuccess={() => {}} />
+                  
+                  <div className="mt-8 text-center">
+                    <p className="text-sm text-muted-foreground mb-4">Or start with drag & drop</p>
+                    <p className="text-xs text-muted-foreground">
+                      Drag components from the left panel to design manually
+                    </p>
+                  </div>
+                  
+                  {projects && Array.isArray(projects) && projects.length > 0 && (
+                    <div className="bg-card border border-border rounded-lg p-4 mt-8">
+                      <h4 className="font-medium mb-2">Your Recent Projects</h4>
+                      <div className="space-y-2">
+                        {projects.slice(0, 2).map((project: Project) => (
+                          <div key={project.id} className="flex items-center justify-between text-sm">
+                            <span>{project.title}</span>
+                            <Badge variant="secondary">{project.isPublished ? 'Published' : 'Draft'}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -372,43 +410,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Build from Prompt Section (if no components on canvas) */}
-      {nodes.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-center max-w-2xl">
-            <Star className="w-12 h-12 text-accent mx-auto mb-4" />
-            <h3 className="text-2xl font-medium text-foreground mb-2">
-              Build Anything with AI
-            </h3>
-            <p className="text-muted-foreground mb-8">
-              Describe what you want to build and let AI create it for you
-            </p>
-            
-            <BuildFromPromptForm onSuccess={() => {}} />
-            
-            <div className="mt-8 text-center">
-              <p className="text-sm text-muted-foreground mb-4">Or start with drag & drop</p>
-              <p className="text-xs text-muted-foreground">
-                Drag components from the left panel to design manually
-              </p>
-            </div>
-            
-            {projects && Array.isArray(projects) && projects.length > 0 && (
-              <div className="bg-card border border-border rounded-lg p-4 pointer-events-auto mt-8">
-                <h4 className="font-medium mb-2">Your Recent Projects</h4>
-                <div className="space-y-2">
-                  {projects.slice(0, 2).map((project: Project) => (
-                    <div key={project.id} className="flex items-center justify-between text-sm">
-                      <span>{project.title}</span>
-                      <Badge variant="secondary">{project.isPublished ? 'Published' : 'Draft'}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

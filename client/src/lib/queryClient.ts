@@ -3,6 +3,18 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    
+    // Handle different error types
+    if (res.status === 401) {
+      throw new Error(`Authentication failed: ${text}`);
+    } else if (res.status === 403) {
+      throw new Error(`Access denied: ${text}`);
+    } else if (res.status === 404) {
+      throw new Error(`Resource not found: ${text}`);
+    } else if (res.status >= 500) {
+      throw new Error(`Server error: ${text}`);
+    }
+    
     throw new Error(`${res.status}: ${text}`);
   }
 }
@@ -12,15 +24,21 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: data ? { "Content-Type": "application/json" } : {},
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
 
-  await throwIfResNotOk(res);
-  return res;
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    // Log error for debugging
+    console.error(`API Request failed: ${method} ${url}`, error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

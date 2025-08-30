@@ -10,13 +10,36 @@ import Dashboard from "@/pages/dashboard";
 import CodePreview from "@/pages/code-preview";
 import BackendBuilder from "@/pages/backend-builder";
 import Deploy from "@/pages/deploy";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { useEffect } from "react";
+
+// Clear localStorage on app start to prevent React object errors
+if (typeof window !== 'undefined') {
+  console.log('Clearing localStorage to prevent React object errors');
+  localStorage.removeItem('aibuilder-canvas-nodes');
+  localStorage.removeItem('aibuilder-canvas-edges');
+  console.log('localStorage cleared successfully');
+}
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  console.log('Router render:', { isAuthenticated, isLoading });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
+      {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
         <>
@@ -32,13 +55,17 @@ function Router() {
 }
 
 function App() {
+  console.log('App rendering...');
+  
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

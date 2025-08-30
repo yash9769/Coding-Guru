@@ -225,7 +225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Build from prompt route
   app.post("/api/ai/build-from-prompt", isAuthenticated, async (req: any, res) => {
     try {
-      const { prompt } = req.body;
+      const { prompt, mode } = req.body;
       
       if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
         return res.status(400).json({ 
@@ -234,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { buildFromPrompt } = await import("./gemini");
-      const generatedWebsite = await buildFromPrompt(prompt);
+      const generatedWebsite = await buildFromPrompt(prompt, mode || 'webapp');
       
       // Create a new project with the generated content
       const userId = req.user.claims.sub;
@@ -259,6 +259,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: "Failed to build from prompt. Please check your API key and try again." 
       });
+    }
+  });
+
+  // Webapp preview route
+  app.get("/api/preview/:projectId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { projectId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Get project from storage
+      const project = await storage.getProject(projectId, userId);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Generate HTML page with project content
+      const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${project.title}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+${project.cssCode || ''}
+  </style>
+</head>
+<body>
+${project.htmlCode || '<div class="p-8 text-center"><h1 class="text-2xl font-bold">Generated WebApp</h1><p>Your AI-generated web application preview.</p></div>'}
+  <script>
+${project.jsCode || ''}
+  </script>
+</body>
+</html>`;
+      
+      res.setHeader('Content-Type', 'text/html');
+      res.send(htmlContent);
+    } catch (error) {
+      console.error("Error serving preview:", error);
+      res.status(500).json({ message: "Failed to load preview" });
     }
   });
 

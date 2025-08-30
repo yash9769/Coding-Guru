@@ -74,12 +74,20 @@ export default function CodePreview() {
   const [framework, setFramework] = useState('React + Tailwind CSS');
   const [stylePreferences, setStylePreferences] = useState('Modern, gradient background, centered content, responsive design');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState({
+    react: sampleCode,
+    css: '/* Add your custom CSS here */\n.hero-gradient {\n  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n}',
+    js: '// Add your JavaScript here\nconsole.log("Component loaded");'
+  });
+  const [selectedVariant, setSelectedVariant] = useState('hero-v1');
+  const [variants, setVariants] = useState(codeVariants);
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(sampleCode);
+    const currentCode = generatedCode[activeTab];
+    navigator.clipboard.writeText(currentCode);
     toast({
       title: "Copied!",
-      description: "Code copied to clipboard",
+      description: `${activeTab.toUpperCase()} code copied to clipboard`,
     });
   };
 
@@ -106,14 +114,28 @@ export default function CodePreview() {
 
       const result = await response.json();
       
-      // Update the sample code with generated code
-      // In a real app, you'd update the actual code state
+      // Update the generated code
+      setGeneratedCode(prev => ({
+        ...prev,
+        react: result.code || prev.react
+      }));
+      
+      // Create new variant
+      const newVariantId = `${componentType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+      const newVariant = {
+        id: newVariantId,
+        name: `${componentType} v${variants.length + 1}`,
+        description: stylePreferences.substring(0, 50) + '...',
+        selected: false,
+      };
+      
+      setVariants(prev => prev.map(v => ({ ...v, selected: false })).concat(newVariant));
+      setSelectedVariant(newVariantId);
+      
       toast({
         title: "Code Generated!",
         description: `Successfully generated ${componentType} component using AI`,
       });
-      
-      console.log("Generated code:", result.code);
       
     } catch (error) {
       console.error("Generation error:", error);
@@ -125,6 +147,16 @@ export default function CodePreview() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleVariantSelect = (variantId: string) => {
+    setVariants(prev => prev.map(v => ({ ...v, selected: v.id === variantId })));
+    setSelectedVariant(variantId);
+    // In a real app, you would load the code for this variant
+    toast({
+      title: "Variant Selected",
+      description: `Switched to ${variants.find(v => v.id === variantId)?.name}`,
+    });
   };
 
   const handleDeploy = () => {
@@ -182,15 +214,19 @@ export default function CodePreview() {
           <div className="flex-1 bg-gray-900 text-white p-6 overflow-auto">
             <div className="font-mono text-sm leading-relaxed">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm text-gray-400">Generated React Component</span>
+                <span className="text-sm text-gray-400">
+                  {activeTab === 'react' ? 'Generated React Component' :
+                   activeTab === 'css' ? 'Custom CSS Styles' :
+                   'JavaScript Logic'}
+                </span>
                 <div className="flex items-center space-x-2 text-xs text-gray-400">
                   <Bot className="w-4 h-4" />
                   <span>AI Generated</span>
                 </div>
               </div>
               
-              <pre className="text-sm leading-relaxed">
-                <code>{sampleCode}</code>
+              <pre className="text-sm leading-relaxed whitespace-pre-wrap">
+                <code>{generatedCode[activeTab]}</code>
               </pre>
             </div>
           </div>
@@ -309,19 +345,20 @@ export default function CodePreview() {
           <div>
             <h4 className="text-sm font-medium text-foreground mb-3">Generated Variants</h4>
             <div className="space-y-2">
-              {codeVariants.map((variant) => (
+              {variants.map((variant) => (
                 <div
                   key={variant.id}
                   className={`bg-background border rounded-lg p-3 cursor-pointer transition-colors ${
-                    variant.selected
+                    selectedVariant === variant.id
                       ? 'border-accent bg-accent/5'
                       : 'border-border hover:border-accent'
                   }`}
+                  onClick={() => handleVariantSelect(variant.id)}
                   data-testid={`variant-${variant.id}`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{variant.name}</span>
-                    {variant.selected && <Check className="w-4 h-4 text-accent" />}
+                    {selectedVariant === variant.id && <Check className="w-4 h-4 text-accent" />}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {variant.description}

@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Builder - No-Code Web Builder Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["Inter", "system-ui", "sans-serif"],
+                }
+            },
+        }
+    };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --background: hsl(210 40% 98%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(221.2 83.2% 53.3%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(210 40% 96%);
+            --secondary-foreground: hsl(222.2 84% 4.9%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(262.1 83.3% 57.8%);
+            --accent-foreground: hsl(210 40% 98%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(221.2 83.2% 53.3%);
+            --radius: 8px;
+        }
+
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, hsl(221.2 83.2% 53.3%) 0%, hsl(262.1 83.3% 57.8%) 100%);
+        }
+
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .8;
+            }
+        }
+
+        .drag-item {
+            cursor: move;
+            transition: all 0.2s ease;
+        }
+
+        .drag-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .canvas-grid {
+            background-image: 
+                linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .code-block {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground font-sans">
+
+    <!-- @COMPONENT: SplashScreen -->
+    <!-- SplashScreen Page -->
+    <div id="splashScreen" class="page active min-h-screen gradient-bg flex items-center justify-center">
+        <div class="text-center px-4">
+            <div class="pulse-animation mb-8">
+                <div class="w-20 h-20 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-xl">
+                    <i class="fas fa-magic text-4xl text-primary"></i>
+                </div>
+                <h1 class="text-6xl font-bold text-white mb-4" data-mock="true">AI Builder</h1>
+                <p class="text-xl text-white/90 mb-12" data-mock="true">Design. Generate. Deploy.</p>
+            </div>
+            
+            <button 
+                onclick="showPage('authPage')" 
+                class="bg-white text-primary hover:bg-gray-50 px-12 py-4 rounded-lg font-semibold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                data-event="click:navigateToAuth"
+            >
+                Get Started
+                <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: SplashScreen -->
+
+    <!-- @COMPONENT: AuthPage -->
+    <!-- Authentication Page -->
+    <div id="authPage" class="page min-h-screen bg-background flex">
+        <!-- Left Side - Branding -->
+        <div class="hidden lg:flex lg:w-1/2 gradient-bg items-center justify-center">
+            <div class="text-center text-white px-8">
+                <div class="w-16 h-16 mx-auto mb-6 bg-white rounded-full flex items-center justify-center">
+                    <i class="fas fa-magic text-2xl text-primary"></i>
+                </div>
+                <h2 class="text-4xl font-bold mb-4" data-mock="true">Welcome to AI Builder</h2>
+                <p class="text-xl opacity-90" data-mock="true">Create stunning websites with the power of AI</p>
+                <div class="mt-8 space-y-4 text-left">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle mr-3"></i>
+                        <span>Drag & Drop Interface</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle mr-3"></i>
+                        <span>AI-Powered Code Generation</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle mr-3"></i>
+                        <span>One-Click Deployment</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Auth Form -->
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
+            <div class="w-full max-w-md">
+                <div class="text-center mb-8">
+                    <h3 class="text-3xl font-bold text-foreground mb-2" data-bind="authMode">Sign In</h3>
+                    <p class="text-muted-foreground" data-mock="true">Enter your credentials to continue</p>
+                </div>
+
+                <!-- Auth Toggle -->
+                <div class="flex bg-muted rounded-lg p-1 mb-6" data-implementation="Toggle between login and signup">
+                    <button 
+                        id="loginTab" 
+                        class="flex-1 py-2 px-4 rounded-md bg-card text-card-foreground shadow-sm font-medium transition-all"
+                        onclick="toggleAuth('login')"
+                    >
+                        Sign In
+                    </button>
+                    <button 
+                        id="signupTab" 
+                        class="flex-1 py-2 px-4 rounded-md text-muted-foreground font-medium transition-all"
+                        onclick="toggleAuth('signup')"
+                    >
+                        Sign Up
+                    </button>
+                </div>
+
+                <!-- Auth Form -->
+                <form id="authForm" class="space-y-4" data-event="submit:handleAuth">
+                    <!-- Full Name (Signup Only) -->
+                    <div id="fullNameField" class="hidden">
+                        <label class="block text-sm font-medium text-foreground mb-2">Full Name</label>
+                        <input 
+                            type="text" 
+                            class="w-full px-4 py-3 bg-card border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-colors" 
+                            placeholder="Enter your full name"
+                            data-bind="user.fullName"
+                        />
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Email</label>
+                        <input 
+                            type="email" 
+                            class="w-full px-4 py-3 bg-card border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-colors" 
+                            placeholder="Enter your email"
+                            data-bind="user.email"
+                            required
+                        />
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Password</label>
+                        <input 
+                            type="password" 
+                            class="w-full px-4 py-3 bg-card border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-colors" 
+                            placeholder="Enter your password"
+                            data-bind="user.password"
+                            required
+                        />
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button 
+                        type="submit" 
+                        class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                        data-implementation="Should validate form and handle JWT authentication"
+                    >
+                        <span id="authButtonText">Sign In</span>
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="my-6 flex items-center">
+                    <div class="flex-1 border-t border-border"></div>
+                    <span class="px-4 text-sm text-muted-foreground">or</span>
+                    <div class="flex-1 border-t border-border"></div>
+                </div>
+
+                <!-- Social Login -->
+                <button class="w-full bg-card border border-border py-3 rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                    <i class="fab fa-google mr-2"></i>
+                    Continue with Google
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: AuthPage -->
+
+    <!-- @COMPONENT: DashboardPage -->
+    <!-- Dashboard Page -->
+    <div id="dashboardPage" class="page min-h-screen bg-background">
+        <!-- Navigation Header -->
+        <header class="bg-card border-b border-border px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-magic text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-foreground" data-mock="true">AI Builder</h1>
+                </div>
+                
+                <nav class="hidden md:flex items-center space-x-6">
+                    <button onclick="showPage('dashboardPage')" class="text-primary font-medium">Dashboard</button>
+                    <button onclick="showPage('codePreviewPage')" class="text-muted-foreground hover:text-foreground">Code Preview</button>
+                    <button onclick="showPage('backendBuilderPage')" class="text-muted-foreground hover:text-foreground">Backend</button>
+                    <button onclick="showPage('deployPage')" class="text-muted-foreground hover:text-foreground">Deploy</button>
+                </nav>
+
+                <div class="flex items-center space-x-4">
+                    <button class="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-muted-foreground text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex h-[calc(100vh-73px)]">
+            <!-- Component Palette -->
+            <div class="w-80 bg-card border-r border-border p-4 overflow-y-auto">
+                <h3 class="text-lg font-semibold text-foreground mb-4">Components</h3>
+                
+                <!-- Search -->
+                <div class="mb-4">
+                    <input 
+                        type="text" 
+                        placeholder="Search components..." 
+                        class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-ring focus:border-transparent"
+                    />
+                </div>
+
+                <!-- Component Categories -->
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wide">Layout</h4>
+                        <div class="space-y-2">
+                            <div class="drag-item bg-background border border-border rounded-lg p-3 cursor-move" data-component="header">
+                                <div class="flex items-center">
+                                    <i class="fas fa-window-maximize text-muted-foreground mr-2"></i>
+                                    <span class="text-sm font-medium">Header</span>
+                                </div>
+                            </div>
+                            <div class="drag-item bg-background border border-border rounded-lg p-3 cursor-move" data-component="navbar">
+                                <div class="flex items-center">
+                                    <i class="fas fa-bars text-muted-foreground mr-2"></i>
+                                    <span class="text-sm font-medium">Navigation</span>
+                                </div>
+                            </div>
+                            <div class="drag-item bg-background border border-border rounded-lg p-3 cursor-move" data-component="footer">
+                                <div class="flex items-center">
+                                    <i class="fas fa-window-minimize text-muted-foreground mr-2"></i>
+                                    <span class="text-sm font-medium">Footer</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wide">Content</h4>
+                        <div class="space-y-2">
+                            <div class="drag-item bg-background border border-border rounded-lg p-3 cursor-move" data-component="hero">
+                                <div class="flex items-center">
+                                    <i class="fas fa-star text-muted-foreground mr-2"></i>
+                                    <span class="text-sm font-medium">Hero Section</span>
+                                </div>
+                            </div>
+                            <div class="drag-item bg-background border border-border rounded-lg p-3 cursor-move" data-component="text">
+                                <div class="flex items-center">
+                                    <i class="fas fa-font text-muted-foreground mr-2"></i>
+                                    <span class="text-sm font-medium">Text Block</span>
+                                </div>
+                            </div>
+                            <div class="drag-item bg-background border border-border rounded-lg p-3 cursor-move" data-component="image">
+                                <div class="flex items-center">
+                                    <i class="fas fa-image text-muted-foreground mr-2"></i>
+                                    <span class="text-sm font-medium">Image</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wide">Interactive</h4>
+                        <div class="space-y-2">
+                            <div class="drag-item bg-background border border-border rounded-lg p-3 cursor-move" data-component="button">
+                                <div class="flex items-center">
+                                    <i class="fas fa-mouse-pointer text-muted-foreground mr-2"></i>
+                                    <span class="text-sm font-medium">Button</span>
+                                </div>
+                            </div>
+                            <div class="drag-item bg-background border border-border rounded-lg p-3 cursor-move" data-component="form">
+                                <div class="flex items-center">
+                                    <i class="fas fa-wpforms text-muted-foreground mr-2"></i>
+                                    <span class="text-sm font-medium">Form</span>
+                                </div>
+                            </div>
+                            <div class="drag-item bg-background border border-border rounded-lg p-3 cursor-move" data-component="card">
+                                <div class="flex items-center">
+                                    <i class="fas fa-id-card text-muted-foreground mr-2"></i>
+                                    <span class="text-sm font-medium">Card</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Area -->
+            <div class="flex-1 flex flex-col">
+                <!-- Canvas Toolbar -->
+                <div class="bg-card border-b border-border p-3 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <button class="px-3 py-1.5 bg-primary text-primary-foreground rounded text-sm font-medium">
+                            <i class="fas fa-desktop mr-1"></i>
+                            Desktop
+                        </button>
+                        <button class="px-3 py-1.5 text-muted-foreground hover:text-foreground rounded text-sm">
+                            <i class="fas fa-tablet-alt mr-1"></i>
+                            Tablet
+                        </button>
+                        <button class="px-3 py-1.5 text-muted-foreground hover:text-foreground rounded text-sm">
+                            <i class="fas fa-mobile-alt mr-1"></i>
+                            Mobile
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <button class="px-3 py-1.5 bg-accent text-accent-foreground rounded text-sm font-medium" onclick="showPage('codePreviewPage')">
+                            <i class="fas fa-code mr-1"></i>
+                            Generate Code
+                        </button>
+                        <button class="p-1.5 text-muted-foreground hover:text-foreground">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button class="p-1.5 text-muted-foreground hover:text-foreground">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canvas -->
+                <div class="flex-1 p-4 canvas-grid bg-muted/20 overflow-auto">
+                    <div class="bg-card border-2 border-dashed border-border rounded-lg min-h-[600px] p-4" id="canvas" data-implementation="React Flow drag-and-drop canvas implementation">
+                        <div class="text-center text-muted-foreground py-20">
+                            <i class="fas fa-mouse-pointer text-4xl mb-4"></i>
+                            <h3 class="text-lg font-medium mb-2" data-mock="true">Start Building Your Website</h3>
+                            <p class="text-sm" data-mock="true">Drag components from the left panel to start designing</p>
+                        </div>
+                        
+                        <!-- Sample dropped component -->
+                        <div class="mt-8 bg-accent/10 border border-accent/20 rounded-lg p-4 relative group hidden" id="sampleComponent">
+                            <div class="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button class="w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-star text-accent mr-2"></i>
+                                <span class="font-medium" data-mock="true">Hero Section Component</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Properties Panel -->
+            <div class="w-80 bg-card border-l border-border p-4 overflow-y-auto">
+                <h3 class="text-lg font-semibold text-foreground mb-4">Properties</h3>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">Styling</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-1">Background</label>
+                                <div class="flex space-x-2">
+                                    <input type="color" value="#ffffff" class="w-10 h-8 rounded border border-border cursor-pointer">
+                                    <input type="text" value="#ffffff" class="flex-1 px-3 py-1.5 bg-background border border-border rounded text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-1">Text Color</label>
+                                <div class="flex space-x-2">
+                                    <input type="color" value="#1f2937" class="w-10 h-8 rounded border border-border cursor-pointer">
+                                    <input type="text" value="#1f2937" class="flex-1 px-3 py-1.5 bg-background border border-border rounded text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-1">Padding</label>
+                                <input type="range" min="0" max="100" value="20" class="w-full">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">Layout</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-1">Width</label>
+                                <select class="w-full px-3 py-2 bg-background border border-border rounded text-sm">
+                                    <option>Auto</option>
+                                    <option>Full Width</option>
+                                    <option>Custom</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-1">Alignment</label>
+                                <div class="flex space-x-1">
+                                    <button class="flex-1 py-2 bg-background border border-border rounded text-sm hover:bg-accent hover:text-accent-foreground">
+                                        <i class="fas fa-align-left"></i>
+                                    </button>
+                                    <button class="flex-1 py-2 bg-accent text-accent-foreground border border-accent rounded text-sm">
+                                        <i class="fas fa-align-center"></i>
+                                    </button>
+                                    <button class="flex-1 py-2 bg-background border border-border rounded text-sm hover:bg-accent hover:text-accent-foreground">
+                                        <i class="fas fa-align-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: DashboardPage -->
+
+    <!-- @COMPONENT: CodePreviewPage -->
+    <!-- Code Preview Page -->
+    <div id="codePreviewPage" class="page min-h-screen bg-background">
+        <!-- Navigation Header -->
+        <header class="bg-card border-b border-border px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="showPage('dashboardPage')" class="w-8 h-8 bg-muted rounded-lg flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <i class="fas fa-arrow-left text-sm"></i>
+                    </button>
+                    <h1 class="text-xl font-bold text-foreground" data-mock="true">Code Preview</h1>
+                </div>
+                
+                <nav class="hidden md:flex items-center space-x-6">
+                    <button onclick="showPage('dashboardPage')" class="text-muted-foreground hover:text-foreground">Dashboard</button>
+                    <button onclick="showPage('codePreviewPage')" class="text-primary font-medium">Code Preview</button>
+                    <button onclick="showPage('backendBuilderPage')" class="text-muted-foreground hover:text-foreground">Backend</button>
+                    <button onclick="showPage('deployPage')" class="text-muted-foreground hover:text-foreground">Deploy</button>
+                </nav>
+
+                <div class="flex items-center space-x-3">
+                    <button class="px-3 py-1.5 bg-accent text-accent-foreground rounded text-sm font-medium" data-implementation="Copy generated code to clipboard">
+                        <i class="fas fa-copy mr-1"></i>
+                        Copy Code
+                    </button>
+                    <button class="px-3 py-1.5 bg-primary text-primary-foreground rounded text-sm font-medium" onclick="showPage('deployPage')">
+                        <i class="fas fa-rocket mr-1"></i>
+                        Deploy
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex h-[calc(100vh-73px)]">
+            <!-- Code Editor -->
+            <div class="flex-1 flex flex-col">
+                <!-- Code Tabs -->
+                <div class="bg-card border-b border-border px-4 flex space-x-1">
+                    <button class="px-4 py-2 bg-background border-b-2 border-primary text-primary font-medium text-sm">
+                        <i class="fab fa-react mr-2"></i>
+                        React Component
+                    </button>
+                    <button class="px-4 py-2 text-muted-foreground hover:text-foreground font-medium text-sm">
+                        <i class="fab fa-css3-alt mr-2"></i>
+                        Tailwind CSS
+                    </button>
+                    <button class="px-4 py-2 text-muted-foreground hover:text-foreground font-medium text-sm">
+                        <i class="fab fa-js-square mr-2"></i>
+                        JavaScript
+                    </button>
+                </div>
+
+                <!-- Code Content -->
+                <div class="flex-1 bg-gray-900 text-white p-6 overflow-auto">
+                    <div class="code-block">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm text-gray-400" data-mock="true">Generated React Component</span>
+                            <div class="flex items-center space-x-2 text-xs text-gray-400">
+                                <i class="fas fa-magic"></i>
+                                <span data-mock="true">AI Generated</span>
+                            </div>
+                        </div>
+                        
+                        <pre class="text-sm leading-relaxed"><code data-mock="true">import React from 'react';
+
+const HeroSection = () => {
+  return (
+    &lt;div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20"&gt;
+      &lt;div className="container mx-auto px-4 text-center"&gt;
+        &lt;h1 className="text-5xl font-bold mb-6"&gt;
+          Welcome to Our Platform
+        &lt;/h1&gt;
+        &lt;p className="text-xl mb-8 max-w-2xl mx-auto"&gt;
+          Build amazing web applications with our AI-powered tools
+          and deploy them instantly to the cloud.
+        &lt;/p&gt;
+        &lt;div className="flex flex-col sm:flex-row gap-4 justify-center"&gt;
+          &lt;button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"&gt;
+            Get Started
+          &lt;/button&gt;
+          &lt;button className="border border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors"&gt;
+            Learn More
+          &lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default HeroSection;</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Generation Panel -->
+            <div class="w-96 bg-card border-l border-border p-6 overflow-y-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-foreground">AI Assistant</h3>
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="AI Ready"></div>
+                </div>
+
+                <!-- AI Status -->
+                <div class="bg-accent/10 border border-accent/20 rounded-lg p-4 mb-6">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-robot text-accent mr-2"></i>
+                        <span class="font-medium text-accent" data-mock="true">AI Status</span>
+                    </div>
+                    <p class="text-sm text-muted-foreground" data-mock="true">
+                        Ready to generate code from your design. Click "Generate" to create React components with Tailwind CSS.
+                    </p>
+                </div>
+
+                <!-- Generation Controls -->
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Component Type</label>
+                        <select class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm">
+                            <option>Hero Section</option>
+                            <option>Navigation Bar</option>
+                            <option>Card Component</option>
+                            <option>Form Component</option>
+                            <option>Footer</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Framework</label>
+                        <select class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm">
+                            <option>React + Tailwind CSS</option>
+                            <option>Vue + Tailwind CSS</option>
+                            <option>HTML + CSS</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Style Preferences</label>
+                        <textarea 
+                            class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm h-20 resize-none" 
+                            placeholder="Describe the styling preferences..."
+                            data-mock="true"
+                        >Modern, gradient background, centered content, responsive design</textarea>
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button 
+                    class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity mb-4"
+                    data-implementation="IMPORTANT: Do not implement AI call without user providing Gemini API key"
+                >
+                    <i class="fas fa-magic mr-2"></i>
+                    Generate Code
+                </button>
+
+                <!-- Generated Variants -->
+                <div>
+                    <h4 class="text-sm font-medium text-foreground mb-3">Generated Variants</h4>
+                    <div class="space-y-2">
+                        <div class="bg-background border border-border rounded-lg p-3 cursor-pointer hover:border-accent transition-colors">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium" data-mock="true">Hero v1</span>
+                                <i class="fas fa-check text-accent"></i>
+                            </div>
+                            <p class="text-xs text-muted-foreground mt-1" data-mock="true">Gradient with centered content</p>
+                        </div>
+                        <div class="bg-background border border-border rounded-lg p-3 cursor-pointer hover:border-accent transition-colors">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium" data-mock="true">Hero v2</span>
+                            </div>
+                            <p class="text-xs text-muted-foreground mt-1" data-mock="true">Image background variant</p>
+                        </div>
+                        <div class="bg-background border border-border rounded-lg p-3 cursor-pointer hover:border-accent transition-colors">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium" data-mock="true">Hero v3</span>
+                            </div>
+                            <p class="text-xs text-muted-foreground mt-1" data-mock="true">Split layout design</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: CodePreviewPage -->
+
+    <!-- @COMPONENT: BackendBuilderPage -->
+    <!-- Backend Builder Page -->
+    <div id="backendBuilderPage" class="page min-h-screen bg-background">
+        <!-- Navigation Header -->
+        <header class="bg-card border-b border-border px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="showPage('codePreviewPage')" class="w-8 h-8 bg-muted rounded-lg flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <i class="fas fa-arrow-left text-sm"></i>
+                    </button>
+                    <h1 class="text-xl font-bold text-foreground" data-mock="true">Backend Builder</h1>
+                </div>
+                
+                <nav class="hidden md:flex items-center space-x-6">
+                    <button onclick="showPage('dashboardPage')" class="text-muted-foreground hover:text-foreground">Dashboard</button>
+                    <button onclick="showPage('codePreviewPage')" class="text-muted-foreground hover:text-foreground">Code Preview</button>
+                    <button onclick="showPage('backendBuilderPage')" class="text-primary font-medium">Backend</button>
+                    <button onclick="showPage('deployPage')" class="text-muted-foreground hover:text-foreground">Deploy</button>
+                </nav>
+
+                <div class="flex items-center space-x-3">
+                    <button class="px-3 py-1.5 bg-accent text-accent-foreground rounded text-sm font-medium">
+                        <i class="fas fa-download mr-1"></i>
+                        Export API
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex h-[calc(100vh-73px)]">
+            <!-- API Builder -->
+            <div class="flex-1 p-6 overflow-y-auto">
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-card rounded-lg border border-border p-6 mb-6">
+                        <h2 class="text-2xl font-bold text-foreground mb-2" data-mock="true">API Configuration</h2>
+                        <p class="text-muted-foreground mb-6" data-mock="true">
+                            Configure your backend API endpoints, database schema, and authentication settings.
+                        </p>
+
+                        <!-- Database Schema -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold text-foreground mb-4">Database Schema</h3>
+                            <div class="bg-background rounded-lg p-4 border border-border">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="font-medium" data-mock="true">Models</span>
+                                    <button class="px-3 py-1.5 bg-primary text-primary-foreground rounded text-sm">
+                                        <i class="fas fa-plus mr-1"></i>
+                                        Add Model
+                                    </button>
+                                </div>
+                                
+                                <!-- Sample Models -->
+                                <div class="space-y-3">
+                                    <div class="bg-card border border-border rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-user text-accent mr-2"></i>
+                                                <span class="font-medium" data-mock="true">User</span>
+                                            </div>
+                                            <div class="flex space-x-1">
+                                                <button class="w-6 h-6 bg-muted rounded flex items-center justify-center text-xs hover:bg-accent hover:text-accent-foreground">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="w-6 h-6 bg-muted rounded flex items-center justify-center text-xs hover:bg-destructive hover:text-destructive-foreground">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="space-y-2 text-sm">
+                                            <div class="flex justify-between">
+                                                <span class="text-muted-foreground">id</span>
+                                                <span class="font-mono bg-muted px-2 py-1 rounded text-xs">ObjectId</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-muted-foreground">name</span>
+                                                <span class="font-mono bg-muted px-2 py-1 rounded text-xs">String</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-muted-foreground">email</span>
+                                                <span class="font-mono bg-muted px-2 py-1 rounded text-xs">String</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-muted-foreground">createdAt</span>
+                                                <span class="font-mono bg-muted px-2 py-1 rounded text-xs">Date</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-card border border-border rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-file text-accent mr-2"></i>
+                                                <span class="font-medium" data-mock="true">Project</span>
+                                            </div>
+                                            <div class="flex space-x-1">
+                                                <button class="w-6 h-6 bg-muted rounded flex items-center justify-center text-xs hover:bg-accent hover:text-accent-foreground">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="w-6 h-6 bg-muted rounded flex items-center justify-center text-xs hover:bg-destructive hover:text-destructive-foreground">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="space-y-2 text-sm">
+                                            <div class="flex justify-between">
+                                                <span class="text-muted-foreground">id</span>
+                                                <span class="font-mono bg-muted px-2 py-1 rounded text-xs">ObjectId</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-muted-foreground">title</span>
+                                                <span class="font-mono bg-muted px-2 py-1 rounded text-xs">String</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-muted-foreground">userId</span>
+                                                <span class="font-mono bg-muted px-2 py-1 rounded text-xs">ObjectId</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-muted-foreground">html</span>
+                                                <span class="font-mono bg-muted px-2 py-1 rounded text-xs">String</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API Endpoints -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold text-foreground mb-4">API Endpoints</h3>
+                            <div class="bg-background rounded-lg p-4 border border-border">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="font-medium" data-mock="true">Routes</span>
+                                    <button class="px-3 py-1.5 bg-primary text-primary-foreground rounded text-sm">
+                                        <i class="fas fa-plus mr-1"></i>
+                                        Add Route
+                                    </button>
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">GET</span>
+                                            <code class="font-mono text-sm" data-mock="true">/api/users</code>
+                                            <span class="text-muted-foreground text-sm" data-mock="true">Get all users</span>
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted-foreground"></i>
+                                    </div>
+
+                                    <div class="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">POST</span>
+                                            <code class="font-mono text-sm" data-mock="true">/api/auth/login</code>
+                                            <span class="text-muted-foreground text-sm" data-mock="true">User authentication</span>
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted-foreground"></i>
+                                    </div>
+
+                                    <div class="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">POST</span>
+                                            <code class="font-mono text-sm" data-mock="true">/api/projects</code>
+                                            <span class="text-muted-foreground text-sm" data-mock="true">Create new project</span>
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted-foreground"></i>
+                                    </div>
+
+                                    <div class="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-medium">PUT</span>
+                                            <code class="font-mono text-sm" data-mock="true">/api/projects/:id</code>
+                                            <span class="text-muted-foreground text-sm" data-mock="true">Update project</span>
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted-foreground"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Authentication Settings -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-foreground mb-4">Authentication</h3>
+                            <div class="bg-background rounded-lg p-4 border border-border">
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="font-medium text-foreground" data-mock="true">JWT Authentication</span>
+                                            <p class="text-sm text-muted-foreground" data-mock="true">Secure token-based authentication</p>
+                                        </div>
+                                        <div class="w-12 h-6 bg-accent rounded-full flex items-center px-1">
+                                            <div class="w-4 h-4 bg-white rounded-full ml-6"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="font-medium text-foreground" data-mock="true">Password Hashing</span>
+                                            <p class="text-sm text-muted-foreground" data-mock="true">Bcrypt password protection</p>
+                                        </div>
+                                        <div class="w-12 h-6 bg-accent rounded-full flex items-center px-1">
+                                            <div class="w-4 h-4 bg-white rounded-full ml-6"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="font-medium text-foreground" data-mock="true">Rate Limiting</span>
+                                            <p class="text-sm text-muted-foreground" data-mock="true">API request throttling</p>
+                                        </div>
+                                        <div class="w-12 h-6 bg-muted rounded-full flex items-center px-1">
+                                            <div class="w-4 h-4 bg-white rounded-full"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code Generation Panel -->
+            <div class="w-96 bg-card border-l border-border p-6 overflow-y-auto">
+                <h3 class="text-lg font-semibold text-foreground mb-4">Backend Generation</h3>
+                
+                <div class="bg-accent/10 border border-accent/20 rounded-lg p-4 mb-6">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-server text-accent mr-2"></i>
+                        <span class="font-medium text-accent" data-mock="true">Express.js API</span>
+                    </div>
+                    <p class="text-sm text-muted-foreground" data-mock="true">
+                        Generate Node.js + Express backend with MongoDB integration and JWT authentication.
+                    </p>
+                </div>
+
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Database Provider</label>
+                        <select class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm">
+                            <option>MongoDB</option>
+                            <option>PostgreSQL</option>
+                            <option>MySQL</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Framework</label>
+                        <select class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm">
+                            <option>Express.js</option>
+                            <option>Fastify</option>
+                            <option>Koa.js</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-2">Features</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" checked class="mr-2 rounded border-border">
+                                <span class="text-sm" data-mock="true">User Authentication</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" checked class="mr-2 rounded border-border">
+                                <span class="text-sm" data-mock="true">CRUD Operations</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2 rounded border-border">
+                                <span class="text-sm" data-mock="true">File Upload</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2 rounded border-border">
+                                <span class="text-sm" data-mock="true">Email Integration</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button 
+                    class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity mb-4"
+                    data-implementation="Generate Express.js backend code using dummy functions until AI integration"
+                >
+                    <i class="fas fa-code mr-2"></i>
+                    Generate Backend
+                </button>
+
+                <div>
+                    <h4 class="text-sm font-medium text-foreground mb-3">Generated Files</h4>
+                    <div class="space-y-2">
+                        <div class="bg-background border border-border rounded-lg p-3">
+                            <div class="flex items-center">
+                                <i class="fas fa-file-code text-muted-foreground mr-2"></i>
+                                <span class="text-sm font-medium" data-mock="true">server.js</span>
+                            </div>
+                        </div>
+                        <div class="bg-background border border-border rounded-lg p-3">
+                            <div class="flex items-center">
+                                <i class="fas fa-folder text-muted-foreground mr-2"></i>
+                                <span class="text-sm font-medium" data-mock="true">routes/</span>
+                            </div>
+                        </div>
+                        <div class="bg-background border border-border rounded-lg p-3">
+                            <div class="flex items-center">
+                                <i class="fas fa-folder text-muted-foreground mr-2"></i>
+                                <span class="text-sm font-medium" data-mock="true">models/</span>
+                            </div>
+                        </div>
+                        <div class="bg-background border border-border rounded-lg p-3">
+                            <div class="flex items-center">
+                                <i class="fas fa-file text-muted-foreground mr-2"></i>
+                                <span class="text-sm font-medium" data-mock="true">package.json</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: BackendBuilderPage -->
+
+    <!-- @COMPONENT: DeployPage -->
+    <!-- Deploy Page -->
+    <div id="deployPage" class="page min-h-screen bg-background">
+        <!-- Navigation Header -->
+        <header class="bg-card border-b border-border px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="showPage('backendBuilderPage')" class="w-8 h-8 bg-muted rounded-lg flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <i class="fas fa-arrow-left text-sm"></i>
+                    </button>
+                    <h1 class="text-xl font-bold text-foreground" data-mock="true">Deploy</h1>
+                </div>
+                
+                <nav class="hidden md:flex items-center space-x-6">
+                    <button onclick="showPage('dashboardPage')" class="text-muted-foreground hover:text-foreground">Dashboard</button>
+                    <button onclick="showPage('codePreviewPage')" class="text-muted-foreground hover:text-foreground">Code Preview</button>
+                    <button onclick="showPage('backendBuilderPage')" class="text-muted-foreground hover:text-foreground">Backend</button>
+                    <button onclick="showPage('deployPage')" class="text-primary font-medium">Deploy</button>
+                </nav>
+
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2 px-3 py-1.5 bg-green-100 text-green-700 rounded text-sm">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span data-mock="true">Ready to Deploy</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-6xl mx-auto p-6">
+            <!-- Deployment Overview -->
+            <div class="bg-card rounded-lg border border-border p-6 mb-6">
+                <div class="flex items-start justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-foreground mb-2" data-mock="true">Deploy Your Project</h2>
+                        <p class="text-muted-foreground" data-mock="true">
+                            Deploy your AI-generated website to the cloud with one click. Choose from multiple hosting providers.
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-foreground" data-mock="true">My Website</div>
+                        <div class="text-sm text-muted-foreground" data-mock="true">Last updated 2 minutes ago</div>
+                    </div>
+                </div>
+
+                <!-- Project Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-background rounded-lg p-4 border border-border">
+                        <div class="text-2xl font-bold text-foreground" data-mock="true">3</div>
+                        <div class="text-sm text-muted-foreground" data-mock="true">Components</div>
+                    </div>
+                    <div class="bg-background rounded-lg p-4 border border-border">
+                        <div class="text-2xl font-bold text-foreground" data-mock="true">5</div>
+                        <div class="text-sm text-muted-foreground" data-mock="true">API Endpoints</div>
+                    </div>
+                    <div class="bg-background rounded-lg p-4 border border-border">
+                        <div class="text-2xl font-bold text-foreground" data-mock="true">2.3MB</div>
+                        <div class="text-sm text-muted-foreground" data-mock="true">Bundle Size</div>
+                    </div>
+                    <div class="bg-background rounded-lg p-4 border border-border">
+                        <div class="text-2xl font-bold text-accent" data-mock="true">98%</div>
+                        <div class="text-sm text-muted-foreground" data-mock="true">Performance</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Deployment Providers -->
+                <div class="bg-card rounded-lg border border-border p-6">
+                    <h3 class="text-lg font-semibold text-foreground mb-4">Choose Hosting Provider</h3>
+                    
+                    <div class="space-y-4">
+                        <!-- Vercel -->
+                        <div class="border border-accent bg-accent/5 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-black rounded flex items-center justify-center mr-3">
+                                        <span class="text-white font-bold text-sm">▲</span>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium" data-mock="true">Vercel</div>
+                                        <div class="text-sm text-muted-foreground" data-mock="true">Recommended</div>
+                                    </div>
+                                </div>
+                                <div class="w-4 h-4 border-2 border-accent rounded-full bg-accent flex items-center justify-center">
+                                    <div class="w-2 h-2 bg-white rounded-full"></div>
+                                </div>
+                            </div>
+                            <div class="text-sm text-muted-foreground mb-3">
+                                Automatic deployments, global CDN, serverless functions
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-green-600 font-medium">Free Plan Available</span>
+                                <span class="text-muted-foreground">~30s deploy</span>
+                            </div>
+                        </div>
+
+                        <!-- Netlify -->
+                        <div class="border border-border rounded-lg p-4 cursor-pointer hover:border-accent transition-colors">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-teal-500 rounded flex items-center justify-center mr-3">
+                                        <span class="text-white font-bold text-sm">N</span>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium" data-mock="true">Netlify</div>
+                                        <div class="text-sm text-muted-foreground" data-mock="true">Popular choice</div>
+                                    </div>
+                                </div>
+                                <div class="w-4 h-4 border-2 border-border rounded-full"></div>
+                            </div>
+                            <div class="text-sm text-muted-foreground mb-3">
+                                Git-based deployments, form handling, edge functions
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-green-600 font-medium">Free Plan Available</span>
+                                <span class="text-muted-foreground">~45s deploy</span>
+                            </div>
+                        </div>
+
+                        <!-- AWS -->
+                        <div class="border border-border rounded-lg p-4 cursor-pointer hover:border-accent transition-colors">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-orange-500 rounded flex items-center justify-center mr-3">
+                                        <span class="text-white font-bold text-sm">AWS</span>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium" data-mock="true">AWS Amplify</div>
+                                        <div class="text-sm text-muted-foreground" data-mock="true">Enterprise ready</div>
+                                    </div>
+                                </div>
+                                <div class="w-4 h-4 border-2 border-border rounded-full"></div>
+                            </div>
+                            <div class="text-sm text-muted-foreground mb-3">
+                                Scalable hosting, full AWS integration, custom domains
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-blue-600 font-medium">Pay per use</span>
+                                <span class="text-muted-foreground">~2min deploy</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deployment Settings -->
+                <div class="bg-card rounded-lg border border-border p-6">
+                    <h3 class="text-lg font-semibold text-foreground mb-4">Deployment Settings</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-foreground mb-2">Project Name</label>
+                            <input 
+                                type="text" 
+                                value="my-ai-website" 
+                                class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-ring focus:border-transparent"
+                                data-bind="deployment.projectName"
+                            />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-foreground mb-2">Custom Domain</label>
+                            <input 
+                                type="text" 
+                                placeholder="yoursite.com (optional)" 
+                                class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-ring focus:border-transparent"
+                                data-bind="deployment.customDomain"
+                            />
+                            <p class="text-xs text-muted-foreground mt-1" data-mock="true">You can add a custom domain after deployment</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-foreground mb-2">Environment</label>
+                            <select class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm">
+                                <option>Production</option>
+                                <option>Preview</option>
+                                <option>Development</option>
+                            </select>
+                        </div>
+
+                        <!-- Environment Variables -->
+                        <div>
+                            <label class="block text-sm font-medium text-foreground mb-2">Environment Variables</label>
+                            <div class="bg-background border border-border rounded-lg p-3">
+                                <div class="flex items-center justify-between text-sm mb-2">
+                                    <span class="font-medium" data-mock="true">Variables (2)</span>
+                                    <button class="text-accent hover:text-accent-foreground">
+                                        <i class="fas fa-plus mr-1"></i>
+                                        Add
+                                    </button>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center space-x-2 text-xs">
+                                        <span class="font-mono bg-muted px-2 py-1 rounded" data-mock="true">NODE_ENV</span>
+                                        <span>=</span>
+                                        <span class="font-mono bg-muted px-2 py-1 rounded" data-mock="true">production</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2 text-xs">
+                                        <span class="font-mono bg-muted px-2 py-1 rounded" data-mock="true">MONGODB_URI</span>
+                                        <span>=</span>
+                                        <span class="font-mono bg-muted px-2 py-1 rounded" data-mock="true">••••••••••••</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Build Settings -->
+                        <div>
+                            <label class="block text-sm font-medium text-foreground mb-2">Build Settings</label>
+                            <div class="bg-background border border-border rounded-lg p-3">
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-muted-foreground">Build Command</span>
+                                        <code class="font-mono bg-muted px-2 py-1 rounded text-xs" data-mock="true">npm run build</code>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-muted-foreground">Output Directory</span>
+                                        <code class="font-mono bg-muted px-2 py-1 rounded text-xs" data-mock="true">dist/</code>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-muted-foreground">Node Version</span>
+                                        <code class="font-mono bg-muted px-2 py-1 rounded text-xs" data-mock="true">18.x</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deploy Button -->
+            <div class="mt-6 text-center">
+                <button 
+                    class="inline-flex items-center px-8 py-4 gradient-bg text-white rounded-lg font-semibold hover:opacity-90 transition-opacity text-lg"
+                    data-implementation="One-click deployment stub - integrate with chosen hosting provider"
+                >
+                    <i class="fas fa-rocket mr-3"></i>
+                    Deploy Now
+                </button>
+                <p class="text-sm text-muted-foreground mt-2" data-mock="true">
+                    Your website will be live in under 60 seconds
+                </p>
+            </div>
+
+            <!-- Previous Deployments -->
+            <div class="mt-8 bg-card rounded-lg border border-border p-6">
+                <h3 class="text-lg font-semibold text-foreground mb-4">Deployment History</h3>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <div>
+                                <div class="font-medium text-sm" data-mock="true">Production Deploy</div>
+                                <div class="text-xs text-muted-foreground" data-mock="true">Dec 15, 2023 at 2:30 PM</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded" data-mock="true">Live</span>
+                            <a href="#" class="text-accent hover:text-accent-foreground text-sm" data-mock="true">
+                                my-ai-website.vercel.app
+                                <i class="fas fa-external-link-alt ml-1 text-xs"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                            <div>
+                                <div class="font-medium text-sm" data-mock="true">Preview Deploy</div>
+                                <div class="text-xs text-muted-foreground" data-mock="true">Dec 14, 2023 at 4:15 PM</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded" data-mock="true">Archived</span>
+                            <span class="text-sm text-muted-foreground" data-mock="true">31s</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                            <div>
+                                <div class="font-medium text-sm" data-mock="true">Initial Deploy</div>
+                                <div class="text-xs text-muted-foreground" data-mock="true">Dec 13, 2023 at 9:20 AM</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded" data-mock="true">Archived</span>
+                            <span class="text-sm text-muted-foreground" data-mock="true">45s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: DeployPage -->
+
+    <script>
+        // Simple page navigation system
+        function showPage(pageId) {
+            // Hide all pages
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => page.classList.remove('active'));
+            
+            // Show selected page
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+        }
+
+        // Auth form toggle
+        function toggleAuth(mode) {
+            const loginTab = document.getElementById('loginTab');
+            const signupTab = document.getElementById('signupTab');
+            const fullNameField = document.getElementById('fullNameField');
+            const authButtonText = document.getElementById('authButtonText');
+            
+            if (mode === 'login') {
+                loginTab.classList.add('bg-card', 'text-card-foreground', 'shadow-sm');
+                loginTab.classList.remove('text-muted-foreground');
+                signupTab.classList.remove('bg-card', 'text-card-foreground', 'shadow-sm');
+                signupTab.classList.add('text-muted-foreground');
+                fullNameField.classList.add('hidden');
+                authButtonText.textContent = 'Sign In';
+            } else {
+                signupTab.classList.add('bg-card', 'text-card-foreground', 'shadow-sm');
+                signupTab.classList.remove('text-muted-foreground');
+                loginTab.classList.remove('bg-card', 'text-card-foreground', 'shadow-sm');
+                loginTab.classList.add('text-muted-foreground');
+                fullNameField.classList.remove('hidden');
+                authButtonText.textContent = 'Sign Up';
+            }
+        }
+
+        // Form submission handler (stub)
+        document.getElementById('authForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            // TODO: Implement JWT authentication logic
+            setTimeout(() => {
+                showPage('dashboardPage');
+            }, 1000);
+        });
+
+        // Initialize some interactive behaviors
+        (function() {
+            // Simulate drag and drop behavior
+            const dragItems = document.querySelectorAll('.drag-item');
+            dragItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const sampleComponent = document.getElementById('sampleComponent');
+                    if (sampleComponent) {
+                        sampleComponent.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Auto-redirect from splash screen after 3 seconds (for demo purposes)
+            setTimeout(() => {
+                const splashScreen = document.getElementById('splashScreen');
+                if (splashScreen && splashScreen.classList.contains('active')) {
+                    // Don't auto-redirect to let user explore
+                }
+            }, 5000);
+        })();
+    </script>
+</body>
+</html>

@@ -92,6 +92,17 @@ export default function BackendBuilder() {
     emailIntegration: false,
   });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [models, setModels] = useState(databaseModels);
+  const [routes, setRoutes] = useState(apiRoutes);
+  const [isAddingModel, setIsAddingModel] = useState(false);
+  const [isAddingRoute, setIsAddingRoute] = useState(false);
+  const [newModel, setNewModel] = useState({ name: '', fields: [{ name: '', type: '' }] });
+  const [newRoute, setNewRoute] = useState({ method: 'GET' as const, path: '', description: '' });
+  const [authSettings, setAuthSettings] = useState({
+    jwtAuth: true,
+    passwordHashing: true,
+    rateLimiting: false,
+  });
 
   const handleGenerateBackend = async () => {
     setIsGenerating(true);
@@ -136,16 +147,93 @@ export default function BackendBuilder() {
   };
 
   const handleAddModel = () => {
+    setIsAddingModel(true);
+    setNewModel({ name: '', fields: [{ name: '', type: '' }] });
+  };
+
+  const handleSaveModel = () => {
+    if (newModel.name && newModel.fields.every(f => f.name && f.type)) {
+      const model: DatabaseModel = {
+        id: newModel.name.toLowerCase().replace(/\s+/g, '_'),
+        name: newModel.name,
+        icon: FileText,
+        fields: newModel.fields,
+      };
+      setModels(prev => [...prev, model]);
+      setIsAddingModel(false);
+      toast({
+        title: "Model Added",
+        description: `${newModel.name} model has been created successfully`,
+      });
+    } else {
+      toast({
+        title: "Invalid Model",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteModel = (modelId: string) => {
+    setModels(prev => prev.filter(m => m.id !== modelId));
     toast({
-      title: "Add Model",
-      description: "Model creation dialog would open here",
+      title: "Model Deleted",
+      description: "Model has been removed",
     });
   };
 
   const handleAddRoute = () => {
+    setIsAddingRoute(true);
+    setNewRoute({ method: 'GET', path: '', description: '' });
+  };
+
+  const handleSaveRoute = () => {
+    if (newRoute.path && newRoute.description) {
+      const route: ApiRoute = {
+        id: Date.now().toString(),
+        method: newRoute.method,
+        path: newRoute.path,
+        description: newRoute.description,
+      };
+      setRoutes(prev => [...prev, route]);
+      setIsAddingRoute(false);
+      toast({
+        title: "Route Added",
+        description: `${newRoute.method} ${newRoute.path} has been created`,
+      });
+    } else {
+      toast({
+        title: "Invalid Route",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportAPI = () => {
+    const apiSpec = {
+      database: selectedDatabase,
+      framework: selectedFramework,
+      models: models,
+      routes: routes,
+      features: features,
+      authSettings: authSettings,
+      generatedAt: new Date().toISOString(),
+    };
+    
+    const blob = new Blob([JSON.stringify(apiSpec, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'api-specification.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
     toast({
-      title: "Add Route",
-      description: "Route creation dialog would open here",
+      title: "API Exported",
+      description: "API specification has been downloaded",
     });
   };
 
@@ -176,7 +264,7 @@ export default function BackendBuilder() {
                 <h1 className="text-2xl font-bold text-foreground">Backend Builder</h1>
               </div>
               
-              <Button variant="outline" data-testid="button-export">
+              <Button variant="outline" onClick={handleExportAPI} data-testid="button-export">
                 <Download className="w-4 h-4 mr-2" />
                 Export API
               </Button>
@@ -205,7 +293,7 @@ export default function BackendBuilder() {
                   
                   <div className="bg-background rounded-lg p-4 border border-border">
                     <div className="space-y-3">
-                      {databaseModels.map((model) => (
+                      {models.map((model) => (
                         <Card key={model.id}>
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-3">
@@ -217,7 +305,12 @@ export default function BackendBuilder() {
                                 <Button size="sm" variant="ghost" data-testid={`button-edit-${model.id}`}>
                                   <Edit className="w-4 h-4" />
                                 </Button>
-                                <Button size="sm" variant="ghost" data-testid={`button-delete-${model.id}`}>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  onClick={() => handleDeleteModel(model.id)}
+                                  data-testid={`button-delete-${model.id}`}
+                                >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
@@ -235,6 +328,85 @@ export default function BackendBuilder() {
                           </CardContent>
                         </Card>
                       ))}
+                      
+                      {/* Add Model Form */}
+                      {isAddingModel && (
+                        <Card className="border-dashed border-accent">
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <Input
+                                placeholder="Model name (e.g., Product)"
+                                value={newModel.name}
+                                onChange={(e) => setNewModel(prev => ({ ...prev, name: e.target.value }))}
+                              />
+                              {newModel.fields.map((field, index) => (
+                                <div key={index} className="flex space-x-2">
+                                  <Input
+                                    placeholder="Field name"
+                                    value={field.name}
+                                    onChange={(e) => {
+                                      const fields = [...newModel.fields];
+                                      fields[index].name = e.target.value;
+                                      setNewModel(prev => ({ ...prev, fields }));
+                                    }}
+                                  />
+                                  <select
+                                    value={field.type}
+                                    onChange={(e) => {
+                                      const fields = [...newModel.fields];
+                                      fields[index].type = e.target.value;
+                                      setNewModel(prev => ({ ...prev, fields }));
+                                    }}
+                                    className="px-3 py-2 bg-background border border-border rounded text-sm"
+                                  >
+                                    <option value="">Select type</option>
+                                    <option value="String">String</option>
+                                    <option value="Number">Number</option>
+                                    <option value="Boolean">Boolean</option>
+                                    <option value="Date">Date</option>
+                                    <option value="ObjectId">ObjectId</option>
+                                  </select>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      const fields = newModel.fields.filter((_, i) => i !== index);
+                                      setNewModel(prev => ({ ...prev, fields }));
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setNewModel(prev => ({
+                                      ...prev,
+                                      fields: [...prev.fields, { name: '', type: '' }]
+                                    }));
+                                  }}
+                                >
+                                  <Plus className="w-4 h-4 mr-1" />
+                                  Add Field
+                                </Button>
+                                <Button size="sm" onClick={handleSaveModel}>
+                                  Save Model
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setIsAddingModel(false)}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -251,7 +423,7 @@ export default function BackendBuilder() {
                   
                   <div className="bg-background rounded-lg p-4 border border-border">
                     <div className="space-y-3">
-                      {apiRoutes.map((route) => (
+                      {routes.map((route) => (
                         <div
                           key={route.id}
                           className="flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:shadow-sm transition-shadow cursor-pointer"
@@ -264,9 +436,67 @@ export default function BackendBuilder() {
                             <code className="font-mono text-sm">{route.path}</code>
                             <span className="text-muted-foreground text-sm">{route.description}</span>
                           </div>
-                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          <div className="flex items-center space-x-2">
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRoutes(prev => prev.filter(r => r.id !== route.id));
+                                toast({
+                                  title: "Route Deleted",
+                                  description: `${route.method} ${route.path} has been removed`,
+                                });
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
+                      
+                      {/* Add Route Form */}
+                      {isAddingRoute && (
+                        <div className="p-3 bg-card border border-dashed border-accent rounded-lg">
+                          <div className="space-y-3">
+                            <div className="flex space-x-2">
+                              <select
+                                value={newRoute.method}
+                                onChange={(e) => setNewRoute(prev => ({ ...prev, method: e.target.value as any }))}
+                                className="px-3 py-2 bg-background border border-border rounded text-sm"
+                              >
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                              </select>
+                              <Input
+                                placeholder="/api/endpoint"
+                                value={newRoute.path}
+                                onChange={(e) => setNewRoute(prev => ({ ...prev, path: e.target.value }))}
+                              />
+                            </div>
+                            <Input
+                              placeholder="Description"
+                              value={newRoute.description}
+                              onChange={(e) => setNewRoute(prev => ({ ...prev, description: e.target.value }))}
+                            />
+                            <div className="flex space-x-2">
+                              <Button size="sm" onClick={handleSaveRoute}>
+                                Save Route
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setIsAddingRoute(false)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -284,7 +514,11 @@ export default function BackendBuilder() {
                             <p className="text-sm text-muted-foreground">Secure token-based authentication</p>
                           </div>
                         </div>
-                        <Switch checked defaultChecked data-testid="switch-jwt-auth" />
+                        <Switch 
+                          checked={authSettings.jwtAuth} 
+                          onCheckedChange={(checked) => setAuthSettings(prev => ({ ...prev, jwtAuth: checked }))}
+                          data-testid="switch-jwt-auth" 
+                        />
                       </div>
                       
                       <div className="flex items-center justify-between">
@@ -295,18 +529,26 @@ export default function BackendBuilder() {
                             <p className="text-sm text-muted-foreground">Bcrypt password protection</p>
                           </div>
                         </div>
-                        <Switch checked defaultChecked data-testid="switch-password-hash" />
+                        <Switch 
+                          checked={authSettings.passwordHashing}
+                          onCheckedChange={(checked) => setAuthSettings(prev => ({ ...prev, passwordHashing: checked }))}
+                          data-testid="switch-password-hash" 
+                        />
                       </div>
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <Zap className="w-5 h-5 text-muted-foreground mr-3" />
+                          <Zap className={`w-5 h-5 mr-3 ${authSettings.rateLimiting ? 'text-accent' : 'text-muted-foreground'}`} />
                           <div>
                             <span className="font-medium text-foreground">Rate Limiting</span>
                             <p className="text-sm text-muted-foreground">API request throttling</p>
                           </div>
                         </div>
-                        <Switch data-testid="switch-rate-limiting" />
+                        <Switch 
+                          checked={authSettings.rateLimiting}
+                          onCheckedChange={(checked) => setAuthSettings(prev => ({ ...prev, rateLimiting: checked }))}
+                          data-testid="switch-rate-limiting" 
+                        />
                       </div>
                     </div>
                   </div>

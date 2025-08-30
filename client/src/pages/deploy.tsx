@@ -17,6 +17,7 @@ import {
   Zap,
   Shield,
   Plus,
+  Trash2,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -110,22 +111,58 @@ export default function Deploy() {
   const [environment, setEnvironment] = useState('Production');
   const [isDeploying, setIsDeploying] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState('vercel');
+  const [envVars, setEnvVars] = useState([
+    { key: 'NODE_ENV', value: 'production' },
+    { key: 'DATABASE_URL', value: '••••••••••••' },
+  ]);
 
   const handleDeploy = async () => {
     setIsDeploying(true);
     
-    // Simulate deployment process
-    setTimeout(() => {
-      setIsDeploying(false);
+    // Simulate deployment process with progress updates
+    const steps = [
+      'Preparing deployment...',
+      'Building application...',
+      'Uploading assets...',
+      'Configuring server...',
+      'Starting application...'
+    ];
+    
+    for (let i = 0; i < steps.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 600));
       toast({
-        title: "Deployment Successful!",
-        description: `Your website is now live at ${projectName}.vercel.app`,
+        title: "Deploying",
+        description: steps[i],
       });
-    }, 3000);
+    }
+    
+    setIsDeploying(false);
+    toast({
+      title: "Deployment Successful!",
+      description: `Your website is now live at ${projectName}.${selectedProvider === 'vercel' ? 'vercel.app' : selectedProvider === 'netlify' ? 'netlify.app' : 'aws.com'}`,
+    });
   };
 
   const handleProviderSelect = (providerId: string) => {
     setSelectedProvider(providerId);
+    toast({
+      title: "Provider Selected",
+      description: `Switched to ${deploymentProviders.find(p => p.id === providerId)?.name}`,
+    });
+  };
+
+  const handleAddEnvVar = () => {
+    setEnvVars(prev => [...prev, { key: '', value: '' }]);
+  };
+
+  const handleUpdateEnvVar = (index: number, field: 'key' | 'value', newValue: string) => {
+    setEnvVars(prev => prev.map((envVar, i) => 
+      i === index ? { ...envVar, [field]: newValue } : envVar
+    ));
+  };
+
+  const handleRemoveEnvVar = (index: number) => {
+    setEnvVars(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -299,23 +336,45 @@ export default function Deploy() {
                   </label>
                   <div className="bg-background border border-border rounded-lg p-3">
                     <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="font-medium">Variables (2)</span>
-                      <Button size="sm" variant="ghost" data-testid="button-add-env-var">
+                      <span className="font-medium">Variables ({envVars.length})</span>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={handleAddEnvVar}
+                        data-testid="button-add-env-var"
+                      >
                         <Plus className="w-3 h-3 mr-1" />
                         Add
                       </Button>
                     </div>
                     <div className="space-y-2">
-                      <div className="flex items-center space-x-2 text-xs">
-                        <code className="bg-muted px-2 py-1 rounded">NODE_ENV</code>
-                        <span>=</span>
-                        <code className="bg-muted px-2 py-1 rounded">production</code>
-                      </div>
-                      <div className="flex items-center space-x-2 text-xs">
-                        <code className="bg-muted px-2 py-1 rounded">DATABASE_URL</code>
-                        <span>=</span>
-                        <code className="bg-muted px-2 py-1 rounded">••••••••••••</code>
-                      </div>
+                      {envVars.map((envVar, index) => (
+                        <div key={index} className="flex items-center space-x-2 text-xs">
+                          <input
+                            type="text"
+                            placeholder="KEY"
+                            value={envVar.key}
+                            onChange={(e) => handleUpdateEnvVar(index, 'key', e.target.value)}
+                            className="bg-muted px-2 py-1 rounded flex-1 text-xs"
+                          />
+                          <span>=</span>
+                          <input
+                            type={envVar.key.toLowerCase().includes('password') || envVar.key.toLowerCase().includes('secret') ? 'password' : 'text'}
+                            placeholder="value"
+                            value={envVar.value}
+                            onChange={(e) => handleUpdateEnvVar(index, 'value', e.target.value)}
+                            className="bg-muted px-2 py-1 rounded flex-1 text-xs"
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRemoveEnvVar(index)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -399,16 +458,21 @@ export default function Deploy() {
                       {deployment.status === 'live' ? 'Live' : 'Archived'}
                     </Badge>
                     {deployment.url ? (
-                      <a
-                        href={`https://${deployment.url}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-accent hover:text-accent-foreground text-sm flex items-center"
+                      <button
+                        onClick={() => {
+                          // In a real app, this would open the actual deployment
+                          toast({
+                            title: "Opening Deployment",
+                            description: `Opening ${deployment.url} in a new tab`,
+                          });
+                          window.open(`https://${deployment.url}`, '_blank');
+                        }}
+                        className="text-accent hover:text-accent-foreground text-sm flex items-center hover:underline"
                         data-testid={`link-${deployment.id}`}
                       >
                         {deployment.url}
                         <ExternalLink className="w-3 h-3 ml-1" />
-                      </a>
+                      </button>
                     ) : (
                       <span className="text-sm text-muted-foreground">{deployment.buildTime}</span>
                     )}

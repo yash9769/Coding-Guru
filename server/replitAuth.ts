@@ -8,7 +8,7 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-if (!process.env.REPLIT_DOMAINS) {
+if (!process.env.REPLIT_DOMAINS && process.env.NODE_ENV === "production") {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
@@ -24,6 +24,21 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  
+  // Use memory store for local development
+  if (!process.env.DATABASE_URL || process.env.NODE_ENV === "development") {
+    return session({
+      secret: process.env.SESSION_SECRET || "development_secret",
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: false, // Allow HTTP in development
+        maxAge: sessionTtl,
+      },
+    });
+  }
+  
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
@@ -71,6 +86,42 @@ export async function setupAuth(app: Express) {
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Check if we're in local development mode
+  const isLocalDev = !process.env.REPLIT_DOMAINS || process.env.NODE_ENV === "development";
+  
+  if (isLocalDev) {
+    // Use local authentication for development
+    passport.serializeUser((user: Express.User, cb) => cb(null, user));
+    passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+
+    app.get("/api/login", (req, res) => {
+      // Mock authentication for local development
+      const mockUser = {
+        claims: {
+          sub: "local_user_123",
+          email: "demo@example.com", 
+          first_name: "Demo",
+          last_name: "User"
+        }
+      };
+      req.login(mockUser, () => {
+        res.redirect("/");
+      });
+    });
+
+    app.get("/api/callback", (req, res) => {
+      res.redirect("/");
+    });
+
+    app.get("/api/logout", (req, res) => {
+      req.logout(() => {
+        res.redirect("/");
+      });
+    });
+    
+    return;
+  }
 
   const config = await getOidcConfig();
 
@@ -129,6 +180,21 @@ export async function setupAuth(app: Express) {
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
+
+  // For local development, auto-authenticate
+  if (!process.env.REPLIT_DOMAINS || process.env.NODE_ENV === "development") {
+    if (!req.user) {
+      req.user = {
+        claims: {
+          sub: "local_user_123",
+          email: "demo@example.com",
+          first_name: "Demo",
+          last_name: "User"
+        }
+      };
+    }
+    return next();
+  }
 
   if (!req.isAuthenticated() || !user.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });

@@ -8,10 +8,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 interface BuildFromPromptFormProps {
-  onSuccess: () => void;
+  onSuccess: (result?: any) => void;
+  mode?: 'flow' | 'webapp';
 }
 
-export default function BuildFromPromptForm({ onSuccess }: BuildFromPromptFormProps) {
+export default function BuildFromPromptForm({ onSuccess, mode }: BuildFromPromptFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [prompt, setPrompt] = useState("");
@@ -19,7 +20,8 @@ export default function BuildFromPromptForm({ onSuccess }: BuildFromPromptFormPr
   const buildFromPromptMutation = useMutation({
     mutationFn: async (userPrompt: string) => {
       const response = await apiRequest('POST', '/api/ai/build-from-prompt', { 
-        prompt: userPrompt 
+        prompt: userPrompt,
+        mode: mode || 'webapp' // Include mode in the request
       });
       return response.json();
     },
@@ -27,10 +29,10 @@ export default function BuildFromPromptForm({ onSuccess }: BuildFromPromptFormPr
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       toast({
         title: "Project Created!",
-        description: `Successfully generated "${result.project.title}" from your prompt`,
+        description: `Successfully generated "${result.project?.title || 'Website'}" from your prompt`,
       });
       setPrompt("");
-      onSuccess();
+      onSuccess(result);
     },
     onError: (error) => {
       toast({
@@ -54,12 +56,18 @@ export default function BuildFromPromptForm({ onSuccess }: BuildFromPromptFormPr
     buildFromPromptMutation.mutate(prompt);
   };
 
-  const suggestions = [
-    "Build a modern landing page for a SaaS product with pricing tiers",
-    "Create an e-commerce site for selling handmade crafts",
-    "Design a portfolio website for a photographer",
-    "Make a restaurant website with menu and online ordering",
-    "Build a blog platform for technology articles",
+  const suggestions = mode === 'flow' ? [
+    "Create a user registration flow with email verification and password setup",
+    "Design an e-commerce checkout process with payment options",
+    "Map out a customer support ticket resolution workflow",
+    "Build a software deployment pipeline with testing stages",
+    "Create an onboarding flow for a mobile app with tutorials",
+  ] : [
+    "Build a modern SaaS landing page with pricing tiers and testimonials",
+    "Create a professional portfolio website with project showcase and contact form",
+    "Design an e-commerce store with product catalog and shopping cart",
+    "Make a restaurant website with menu, gallery, and online reservations",
+    "Build a business website with services, team showcase, and client testimonials",
   ];
 
   return (
@@ -68,12 +76,15 @@ export default function BuildFromPromptForm({ onSuccess }: BuildFromPromptFormPr
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Describe what you want to build
+              {mode === 'flow' ? 'Describe the process or workflow you want to create' : 'Describe the web application you want to build'}
             </label>
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="e.g., Build a modern portfolio website for a freelance designer with a contact form, project gallery, and about section..."
+              placeholder={mode === 'flow' 
+                ? "e.g., Create a user onboarding flow that guides new users through account setup, profile creation, and initial tutorial..."
+                : "e.g., Build a modern business website with hero section, services showcase, client testimonials, and contact form..."
+              }
               className="min-h-[120px] resize-none"
               data-testid="textarea-build-prompt"
             />
@@ -93,7 +104,7 @@ export default function BuildFromPromptForm({ onSuccess }: BuildFromPromptFormPr
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                Build with AI
+                {mode === 'flow' ? 'Create Flow with AI' : 'Build with AI'}
               </>
             )}
           </Button>
